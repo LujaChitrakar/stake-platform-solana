@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     metadata::Metadata,
-    token::{ Mint, Token},
+    token::{Mint, Token},
 };
 
 #[derive(Accounts)]

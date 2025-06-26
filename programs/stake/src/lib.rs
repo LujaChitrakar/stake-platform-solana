@@ -1,19 +1,18 @@
 use anchor_lang::prelude::*;
 pub mod instructions;
+use anchor_spl::{
+    metadata::{
+        create_metadata_accounts_v3, mpl_token_metadata::types::DataV2, CreateMetadataAccountsV3,
+    },
+    token::{mint_to, MintTo},
+};
 pub use instructions::*;
 
 declare_id!("J2d5vfhWuhStKkvFi3j7Tk7EUnZfuvZiJ4ZQd4aQqBPy");
 
 #[program]
 pub mod stake {
-    use anchor_spl::metadata::{create_metadata_accounts_v3, mpl_token_metadata::types::DataV2, CreateMetadataAccountsV3};
-
     use super::*;
-
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
-        Ok(())
-    }
 
     pub fn create_token_mint(
         ctx: Context<CreateTokenMint>,
@@ -41,23 +40,42 @@ pub mod stake {
             },
         );
 
-        let data=DataV2{
-            name:token_name,
-            symbol:token_symbol,
-            uri:token_uri,
-            seller_fee_basis_points:0,
-            creators:None,
-            collection:None,
-            uses:None
+        let data = DataV2 {
+            name: token_name,
+            symbol: token_symbol,
+            uri: token_uri,
+            seller_fee_basis_points: 0,
+            creators: None,
+            collection: None,
+            uses: None,
         };
 
         create_metadata_accounts_v3(cpi_ctx, data, false, true, None)?;
 
         msg!("Token created successfully");
+        Ok(())
+    }
+    pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
+        msg!("Minting token to the associated token account..");
+        msg!("Mint {}", &ctx.accounts.mint_account.key());
+        msg!(
+            "Token address: {}",
+            &ctx.accounts.associated_token_account.key()
+        );
 
+        let cpi_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            MintTo {
+                mint: ctx.accounts.mint_account.to_account_info(),
+                to: ctx.accounts.associated_token_account.to_account_info(),
+                authority: ctx.accounts.mint_authority.to_account_info(),
+            },
+        );
+        let amount_to_mint = amount * 10u64.pow(ctx.accounts.mint_account.decimals as u32);
+
+        mint_to(cpi_ctx, amount_to_mint)?;
+
+        msg!("Token minted successfully!");
         Ok(())
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}
