@@ -8,7 +8,7 @@ use anchor_spl::{
 };
 pub use instructions::*;
 
-declare_id!("J2d5vfhWuhStKkvFi3j7Tk7EUnZfuvZiJ4ZQd4aQqBPy");
+declare_id!("3Yotwu7h86XRhWEbVnbAUJQGxmBEypEwN5ZoLQBXrT8G");
 
 #[program]
 pub mod stake {
