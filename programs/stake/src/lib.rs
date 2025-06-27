@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 pub mod instructions;
+pub mod states;
 use anchor_spl::{
     metadata::{
         create_metadata_accounts_v3, mpl_token_metadata::types::DataV2, CreateMetadataAccountsV3,
@@ -7,6 +8,7 @@ use anchor_spl::{
     token::{mint_to, MintTo},
 };
 pub use instructions::*;
+pub use states::*;
 
 declare_id!("3Yotwu7h86XRhWEbVnbAUJQGxmBEypEwN5ZoLQBXrT8G");
 
