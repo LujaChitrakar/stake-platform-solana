@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[account]
+#[derive(InitSpace)]
 pub struct UserStake{
     pub user:Pubkey,
     pub stake_time:i64,
@@ -10,6 +11,7 @@ pub struct UserStake{
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct AdminStake{
     pub admin:Pubkey,
     pub staking_mint:Pubkey,
