@@ -1,11 +1,11 @@
+use crate::AdminStake;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use crate::AdminStake;
 
 #[derive(Accounts)]
-pub struct CreateStake<'info>{
+pub struct CreateStake<'info> {
     #[account(mut)]
-    pub admin:Signer<'info>,
+    pub admin: Signer<'info>,
 
     #[account(
         init,
@@ -13,8 +13,8 @@ pub struct CreateStake<'info>{
         space=AdminStake::INIT_SPACE,
         seeds=[b"stake",admin.key().as_ref()],
         bump
-    )]        
-    pub stake:Account<'info,AdminStake>,
+    )]
+    pub stake: Account<'info, AdminStake>,
 
     #[account(
         init,
@@ -24,17 +24,17 @@ pub struct CreateStake<'info>{
         token::mint=staking_mint,
         token::authority=vault_authority
     )]
-    pub vault:Account<'info,TokenAccount>,
+    pub vault: Account<'info, TokenAccount>,
 
     ///CHECK: This account is only for authority. It doesnt read or write.
     #[account(seeds=[b"vault_authority",vault.key().as_ref()],bump)]
-    pub vault_authority:UncheckedAccount<'info>,
+    pub vault_authority: UncheckedAccount<'info>,
 
-    pub staking_mint:Account<'info,Mint>,
+    pub staking_mint: Account<'info, Mint>,
 
-    pub token_program:Program<'info,Token>,
+    pub token_program: Program<'info, Token>,
 
-    pub rent:Sysvar<'info,Rent>,
+    pub rent: Sysvar<'info, Rent>,
 
-    pub system_program:Program<'info,System>
+    pub system_program: Program<'info, System>,
 }

@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+pub mod error;
 pub mod instructions;
 pub mod states;
 use anchor_spl::{
@@ -7,6 +8,7 @@ use anchor_spl::{
     },
     token::{mint_to, MintTo},
 };
+pub use error::ErrorCode;
 pub use instructions::*;
 pub use states::*;
 
@@ -57,6 +59,7 @@ pub mod stake {
         msg!("Token created successfully");
         Ok(())
     }
+
     pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
         msg!("Minting token to the associated token account..");
         msg!("Mint {}", &ctx.accounts.mint_account.key());
@@ -78,6 +81,30 @@ pub mod stake {
         mint_to(cpi_ctx, amount_to_mint)?;
 
         msg!("Token minted successfully!");
+        Ok(())
+    }
+
+    pub fn create_stake(
+        ctx: Context<CreateStake>,
+        reward_mint: Pubkey,
+        reward_rate: u64,
+    ) -> Result<()> {
+        let stake_token_mint: Pubkey = "57dQxpHFknJs96w1Z1DTHi6QgxmR9i7XdhxKuZp8xtzQ"
+            .parse()
+            .unwrap();
+        require!(
+            ctx.accounts.staking_mint.key() == stake_token_mint,
+            ErrorCode::InvalidStakingMint
+        );
+
+        let stake = &mut ctx.accounts.stake;
+
+        stake.admin = ctx.accounts.admin.key();
+        stake.staking_mint = ctx.accounts.staking_mint.key();
+        stake.reward_mint = reward_mint;
+        stake.reward_rate = reward_rate;
+        stake.last_update_time = Clock::get()?.unix_timestamp;
+        stake.reward_per_token_stored = 0;
         Ok(())
     }
 }
