@@ -242,4 +242,50 @@ pub mod stake {
         transfer(cpi_ctx, amount_to_unstake)?;
         Ok(())
     }
+
+    pub fn claim_reward(ctx:Context<ClaimReward>)->Result<()>{
+        let user_stake=&mut ctx.accounts.user_stake;
+        let stake=&mut ctx.accounts.stake;
+
+        let curent_time = Clock::get()?.unix_timestamp;
+        let time_elapsed = curent_time - stake.last_update_time;
+
+        if stake.total_staked > 0 {
+            let additional_reward = (time_elapsed as u128)
+                .checked_mul(stake.reward_rate as u128)
+                .unwrap()
+                .checked_mul(REWARD_PRECISION)
+                .unwrap()
+                .checked_div(stake.total_staked as u128)
+                .unwrap();
+
+            stake.reward_per_token_stored = stake
+                .reward_per_token_stored
+                .checked_add(additional_reward)
+                .unwrap();
+        }
+        stake.last_update_time = curent_time;
+
+         let pending_reward = user_stake.amount_staked as u128
+            * (stake.reward_per_token_stored - user_stake.stake_debt as u128)
+            / REWARD_PRECISION;
+
+        
+
+        let cpi_program=ctx.accounts.token_program.to_account_info();
+        let stake_key=stake.key();
+        let signer_seeds: &[&[&[u8]]]=&[&[b"vault",stake_key.as_ref(),&[ctx.bumps.vault]]];
+
+        let cpi_ctx=CpiContext::new_with_signer(cpi_program, Transfer{
+            from:ctx.accounts.vault.to_account_info(),
+            to:ctx.accounts.user_ata.to_account_info(),
+            authority:ctx.accounts.vault_authority.to_account_info()
+        }, signer_seeds);
+
+        transfer(cpi_ctx, pending_reward as u64)?;
+        user_stake.stake_debt=stake.reward_per_token_stored;
+        user_stake.pending_reward = 0;
+
+        Ok(())
+    }
 }

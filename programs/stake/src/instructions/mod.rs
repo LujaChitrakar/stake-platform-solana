@@ -12,3 +12,6 @@ pub use stake_token::*;
 
 pub mod unstake_token;
 pub use unstake_token::*;
+
+pub mod claim_reward;
+pub use claim_reward::*;
