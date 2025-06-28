@@ -20,9 +20,9 @@ pub struct CreateStake<'info> {
         init,
         payer=admin,
         seeds=[b"vault",stake.key().as_ref()],
-        bump,
         token::mint=staking_mint,
-        token::authority=vault_authority
+        token::authority=vault_authority,
+        bump,
     )]
     pub vault: Account<'info, TokenAccount>,
 

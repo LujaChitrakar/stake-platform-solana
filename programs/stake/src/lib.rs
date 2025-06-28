@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 pub mod error;
+pub mod event;
 pub mod instructions;
 pub mod states;
 use anchor_spl::{
@@ -9,6 +10,7 @@ use anchor_spl::{
     token::{mint_to, MintTo},
 };
 pub use error::ErrorCode;
+pub use event::*;
 pub use instructions::*;
 pub use states::*;
 
@@ -16,6 +18,8 @@ declare_id!("3Yotwu7h86XRhWEbVnbAUJQGxmBEypEwN5ZoLQBXrT8G");
 
 #[program]
 pub mod stake {
+    use anchor_spl::token::{transfer, Transfer};
+
     use super::*;
 
     pub fn create_token_mint(
@@ -105,6 +109,48 @@ pub mod stake {
         stake.reward_rate = reward_rate;
         stake.last_update_time = Clock::get()?.unix_timestamp;
         stake.reward_per_token_stored = 0;
+        stake.vault_bump=ctx.bumps.vault;
+        Ok(())
+    }
+
+    pub fn stake_token(
+        ctx: Context<StakeToken>,
+        amount_to_stake: u64,
+        stake_time: i64,
+    ) -> Result<()> {
+        require!(ctx.accounts.stake.key()==ctx.accounts.user_stake.stake.key(),ErrorCode::InvalidStake);
+        require!(ctx.accounts.user_ata.mint==ctx.accounts.stake.staking_mint,ErrorCode::InvalidUserAta);
+
+        let user_stake = &mut ctx.accounts.user_stake;
+
+        user_stake.user = ctx.accounts.user.key();
+        user_stake.stake=ctx.accounts.stake.key();
+        user_stake.amount_staked = user_stake.amount_staked.saturating_add(amount_to_stake);
+        user_stake.pending_reward = 0;
+        user_stake.stake_time = stake_time;
+        user_stake.start_time = Clock::get()?.unix_timestamp;
+        user_stake.stake_debt = 0;
+        user_stake.end_time = user_stake.stake_time + user_stake.start_time;
+        user_stake.vault_bump=ctx.bumps.vault;
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+
+        let cpi_ctx = CpiContext::new(
+            cpi_program,
+            Transfer {
+                from: ctx.accounts.user_ata.to_account_info(),
+                to: ctx.accounts.vault.to_account_info(),
+                authority: ctx.accounts.user.to_account_info(),
+            },
+        );
+
+        transfer(cpi_ctx, amount_to_stake)?;
+
+        emit!(StakePlaced {
+            user: ctx.accounts.user.key(),
+            stake_amount: amount_to_stake,
+            stake_time: stake_time
+        });
         Ok(())
     }
 }

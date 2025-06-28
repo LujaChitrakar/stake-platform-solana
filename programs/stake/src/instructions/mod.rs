@@ -6,3 +6,6 @@ pub use mint_token::*;
 
 pub mod create_stake;
 pub use create_stake::*;
+
+pub mod stake_token;
+pub use stake_token::*;

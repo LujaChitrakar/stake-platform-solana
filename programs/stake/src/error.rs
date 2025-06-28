@@ -4,4 +4,8 @@ use anchor_lang::prelude::*;
 pub enum ErrorCode {
     #[msg("Invalid Staking Mint")]
     InvalidStakingMint,
+    #[msg("Invalid Stake")]
+    InvalidStake,
+    #[msg("Invalid User Ata")]
+    InvalidUserAta,
 }
