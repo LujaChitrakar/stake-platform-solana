@@ -9,3 +9,6 @@ pub use create_stake::*;
 
 pub mod stake_token;
 pub use stake_token::*;
+
+pub mod unstake_token;
+pub use unstake_token::*;

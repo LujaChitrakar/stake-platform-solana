@@ -8,4 +8,8 @@ pub enum ErrorCode {
     InvalidStake,
     #[msg("Invalid User Ata")]
     InvalidUserAta,
+    #[msg("Stake time not completed yet.")]
+    StakeTimeNotCompleted,
+    #[msg("The amount to unstake is greater than staked amount.")]
+    AmountGreaterThanStakedAmount,
 }

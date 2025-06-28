@@ -22,6 +22,8 @@ pub mod stake {
 
     use super::*;
 
+    const REWARD_PRECISION: u128 = 1_000_000_000_000;
+
     pub fn create_token_mint(
         ctx: Context<CreateTokenMint>,
         _token_decimals: u8,
@@ -109,7 +111,7 @@ pub mod stake {
         stake.reward_rate = reward_rate;
         stake.last_update_time = Clock::get()?.unix_timestamp;
         stake.reward_per_token_stored = 0;
-        stake.vault_bump=ctx.bumps.vault;
+        stake.vault_bump = ctx.bumps.vault;
         Ok(())
     }
 
@@ -118,20 +120,46 @@ pub mod stake {
         amount_to_stake: u64,
         stake_time: i64,
     ) -> Result<()> {
-        require!(ctx.accounts.stake.key()==ctx.accounts.user_stake.stake.key(),ErrorCode::InvalidStake);
-        require!(ctx.accounts.user_ata.mint==ctx.accounts.stake.staking_mint,ErrorCode::InvalidUserAta);
+        require!(
+            ctx.accounts.stake.key() == ctx.accounts.user_stake.stake.key(),
+            ErrorCode::InvalidStake
+        );
+        require!(
+            ctx.accounts.user_ata.mint == ctx.accounts.stake.staking_mint,
+            ErrorCode::InvalidUserAta
+        );
 
         let user_stake = &mut ctx.accounts.user_stake;
 
+        let curent_time = Clock::get()?.unix_timestamp;
+        let last_update_time = ctx.accounts.stake.last_update_time;
+        let time_elapsed = curent_time - last_update_time;
+        let total_staked = ctx.accounts.stake.total_staked;
+        let reward_rate = ctx.accounts.stake.reward_rate;
+        let mut reward_per_token_stored = ctx.accounts.stake.reward_per_token_stored;
+
+        if total_staked > 0 {
+            let additional_reward = (time_elapsed as u128)
+                .checked_mul(reward_rate as u128)
+                .unwrap()
+                .checked_div(total_staked as u128)
+                .unwrap();
+
+            reward_per_token_stored = reward_per_token_stored
+                .checked_add(additional_reward)
+                .unwrap();
+        }
+        ctx.accounts.stake.last_update_time = curent_time;
+
         user_stake.user = ctx.accounts.user.key();
-        user_stake.stake=ctx.accounts.stake.key();
+        user_stake.stake = ctx.accounts.stake.key();
         user_stake.amount_staked = user_stake.amount_staked.saturating_add(amount_to_stake);
         user_stake.pending_reward = 0;
         user_stake.stake_time = stake_time;
-        user_stake.start_time = Clock::get()?.unix_timestamp;
-        user_stake.stake_debt = 0;
+        user_stake.start_time = curent_time;
+        user_stake.stake_debt = reward_per_token_stored;
         user_stake.end_time = user_stake.stake_time + user_stake.start_time;
-        user_stake.vault_bump=ctx.bumps.vault;
+        user_stake.vault_bump = ctx.bumps.vault;
 
         let cpi_program = ctx.accounts.token_program.to_account_info();
 
@@ -151,6 +179,67 @@ pub mod stake {
             stake_amount: amount_to_stake,
             stake_time: stake_time
         });
+        Ok(())
+    }
+
+    pub fn unstake_token(ctx: Context<UnstakeToken>, amount_to_unstake: u64) -> Result<()> {
+        let stake = &mut ctx.accounts.stake;
+        let user_stake = &mut ctx.accounts.user_stake;
+        require!(
+            user_stake.end_time <= Clock::get()?.unix_timestamp,
+            ErrorCode::StakeTimeNotCompleted
+        );
+        require!(
+            user_stake.amount_staked >= amount_to_unstake,
+            ErrorCode::AmountGreaterThanStakedAmount
+        );
+
+        let curent_time = Clock::get()?.unix_timestamp;
+        let time_elapsed = curent_time - stake.last_update_time;
+
+        if stake.total_staked > 0 {
+            let additional_reward = (time_elapsed as u128)
+                .checked_mul(stake.reward_rate as u128)
+                .unwrap()
+                .checked_mul(REWARD_PRECISION)
+                .unwrap()
+                .checked_div(stake.total_staked as u128)
+                .unwrap();
+
+            stake.reward_per_token_stored = stake
+                .reward_per_token_stored
+                .checked_add(additional_reward)
+                .unwrap();
+        }
+        stake.last_update_time = curent_time;
+
+        // let reward_debt=user_stake.amount_staked as u128*stake.reward_per_token_stored;
+
+        let pending_reward = user_stake.amount_staked as u128
+            * (stake.reward_per_token_stored - user_stake.stake_debt as u128)
+            / REWARD_PRECISION;
+
+        user_stake.amount_staked = user_stake.amount_staked.saturating_sub(amount_to_unstake);
+        user_stake.pending_reward = pending_reward as u64;
+        user_stake.stake_debt = stake.reward_per_token_stored;
+
+        stake.total_staked = stake.total_staked.saturating_sub(amount_to_unstake);
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let stake_key = ctx.accounts.stake.key();
+        let signer_seeds: &[&[&[u8]]] = &[&[b"vault", stake_key.as_ref(), &[ctx.bumps.vault]]];
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            cpi_program,
+            Transfer {
+                from: ctx.accounts.vault.to_account_info(),
+                to: ctx.accounts.user_ata.to_account_info(),
+                authority: ctx.accounts.vault_authority.to_account_info(),
+            },
+            signer_seeds,
+        );
+
+        transfer(cpi_ctx, amount_to_unstake)?;
         Ok(())
     }
 }
