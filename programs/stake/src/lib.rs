@@ -7,7 +7,7 @@ use anchor_spl::{
     metadata::{
         create_metadata_accounts_v3, mpl_token_metadata::types::DataV2, CreateMetadataAccountsV3,
     },
-    token::{mint_to, MintTo},
+    token::{mint_to, MintTo,transfer, Transfer},
 };
 pub use error::ErrorCode;
 pub use event::*;
@@ -18,8 +18,6 @@ declare_id!("3Yotwu7h86XRhWEbVnbAUJQGxmBEypEwN5ZoLQBXrT8G");
 
 #[program]
 pub mod stake {
-    use anchor_spl::token::{transfer, Transfer};
-
     use super::*;
 
     const REWARD_PRECISION: u128 = 1_000_000_000_000;

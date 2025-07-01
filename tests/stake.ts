@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Stake } from "../target/types/stake";
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 describe("stake", () => {
@@ -18,6 +18,11 @@ describe("stake", () => {
   };
 
   const mintKeypair = new Keypair();
+
+  const admin = provider.wallet.publicKey;
+  const user = Keypair.generate();
+  const reward_mint = PublicKey;
+  const reward_rate = new anchor.BN(4);
 
   it("Create SPL token!", async () => {
     const tx = await program.methods
@@ -58,5 +63,9 @@ describe("stake", () => {
     );
     console.log(`Transaction Signature ${tx}`);
     console.log(payer.publicKey);
+  });
+
+  it("Should be able to create a stake", async () => {
+    const tx = await program.methods.createStake(reward_mint, reward_rate);
   });
 });
