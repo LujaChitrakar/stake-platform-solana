@@ -3,11 +3,13 @@ import { Program } from "@coral-xyz/anchor";
 import { Stake } from "../target/types/stake";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import {
+  createMint,
   getAccount,
   getAssociatedTokenAddressSync,
   getOrCreateAssociatedTokenAccount,
   mintTo,
 } from "@solana/spl-token";
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
 describe("stake", () => {
   const provider = anchor.AnchorProvider.env();
@@ -38,10 +40,18 @@ describe("stake", () => {
     "57dQxpHFknJs96w1Z1DTHi6QgxmR9i7XdhxKuZp8xtzQ"
   );
 
+  // let staking_mint;
+
   let mintKeypair = new Keypair();
   let admin = provider.wallet.publicKey;
   let reward_rate = new anchor.BN(4);
-  let user = new PublicKey("5KpEiTZ7vpuUZdrEcgY524MsU5cJR85gfHW25YAsX81E");
+  // let user = Keypair.generate();
+
+  let secret_key = "YOUR SECERT KEY";
+
+  let secret_key_bytes = bs58.decode(secret_key);
+
+  let user = anchor.web3.Keypair.fromSecretKey(secret_key_bytes);
 
   // it("Create SPL token!", async () => {
   //   const tx = await program.methods
@@ -127,11 +137,20 @@ describe("stake", () => {
   it("User should be able to stake token", async () => {
     [userStakePda, userStakeBump] =
       anchor.web3.PublicKey.findProgramAddressSync(
-        [Buffer.from("user_stake"), user.toBuffer(), stakePda.toBuffer()],
+        [
+          Buffer.from("user_stake"),
+          user.publicKey.toBuffer(),
+          stakePda.toBuffer(),
+        ],
         program.programId
       );
 
-    const balance = await provider.connection.getBalance(user);
+    // await provider.connection.confirmTransaction(
+    //   await provider.connection.requestAirdrop(user.publicKey, 1e9),
+    //   "confirmed"
+    // );
+
+    const balance = await provider.connection.getBalance(user.publicKey);
     console.log("The balance of user is :", balance);
 
     // Creating a ATA of the USer for the staking token.
@@ -139,18 +158,18 @@ describe("stake", () => {
       provider.connection,
       payer.payer,
       staking_mint,
-      user
+      user.publicKey
     );
 
     // mint to user (ALready done)
-    // await mintTo(
-    //   provider.connection,
-    //   payer.payer,
-    //   staking_mint,
-    //   userAta.address,
-    //   payer.publicKey,
-    //   1000_000_000_000
-    // );
+    await mintTo(
+      provider.connection,
+      payer.payer,
+      staking_mint,
+      userAta.address,
+      payer.publicKey,
+      1000_000_000_000
+    );
     const userTokenAccountInfo = await getAccount(
       provider.connection,
       userAta.address
@@ -160,8 +179,26 @@ describe("stake", () => {
     const amount_to_stake = new anchor.BN(1);
     const time_to_stake = new anchor.BN(1);
 
-    await program.methods.stakeToken(amount_to_stake, time_to_stake).accounts({
-      user: user,
-    });
+    console.log("User ATA:", userStakePda.toBase58());
+
+    await program.methods
+      .stakeToken(amount_to_stake, time_to_stake)
+      .accounts({
+        user: user.publicKey,
+        stake: stakePda,
+        user_stake: userStakePda,
+        vault: vaultPda,
+        user_ata: userAta.address,
+        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+
+    user_stake = await program.account.userStake.fetch(userStakePda);
+
+    console.log("user staked", user_stake);
   });
 });

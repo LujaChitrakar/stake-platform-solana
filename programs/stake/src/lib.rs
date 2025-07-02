@@ -122,14 +122,14 @@ pub mod stake {
         amount_to_stake: u64,
         stake_time: i64,
     ) -> Result<()> {
-        require!(
-            ctx.accounts.stake.key() == ctx.accounts.user_stake.stake.key(),
-            ErrorCode::InvalidStake
-        );
-        require!(
-            ctx.accounts.user_ata.mint == ctx.accounts.stake.staking_mint,
-            ErrorCode::InvalidUserAta
-        );
+        // require!(
+        //     ctx.accounts.stake.key() == ctx.accounts.user_stake.stake.key(),
+        //     ErrorCode::InvalidStake
+        // );
+        // require!(
+        //     ctx.accounts.user_ata.mint == ctx.accounts.stake.staking_mint,
+        //     ErrorCode::InvalidUserAta
+        // );
 
         let user_stake = &mut ctx.accounts.user_stake;
 
