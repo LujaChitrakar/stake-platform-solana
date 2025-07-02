@@ -184,17 +184,17 @@ pub mod stake {
         Ok(())
     }
 
-    pub fn unstake_token(ctx: Context<UnstakeToken>, amount_to_unstake: u64) -> Result<()> {
+    pub fn unstake_token(ctx: Context<UnstakeToken>) -> Result<()> {
         let stake = &mut ctx.accounts.stake;
         let user_stake = &mut ctx.accounts.user_stake;
         require!(
             user_stake.end_time <= Clock::get()?.unix_timestamp,
             ErrorCode::StakeTimeNotCompleted
         );
-        require!(
-            user_stake.amount_staked >= amount_to_unstake,
-            ErrorCode::AmountGreaterThanStakedAmount
-        );
+        // require!(
+        //     user_stake.amount_staked >= amount_to_unstake,
+        //     ErrorCode::AmountGreaterThanStakedAmount
+        // );
 
         let curent_time = Clock::get()?.unix_timestamp;
         let time_elapsed = curent_time - stake.last_update_time;
@@ -215,33 +215,33 @@ pub mod stake {
         }
         stake.last_update_time = curent_time;
 
+        stake.total_staked = stake.total_staked.saturating_sub(user_stake.amount_staked);
         // let reward_debt=user_stake.amount_staked as u128*stake.reward_per_token_stored;
 
         let pending_reward = user_stake.amount_staked as u128
             * (stake.reward_per_token_stored - user_stake.stake_debt as u128)
             / REWARD_PRECISION;
 
-        user_stake.amount_staked = user_stake.amount_staked.saturating_sub(amount_to_unstake);
-        user_stake.pending_reward = pending_reward as u64;
-        user_stake.stake_debt = stake.reward_per_token_stored;
-
-        stake.total_staked = stake.total_staked.saturating_sub(amount_to_unstake);
-
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let stake_key = ctx.accounts.stake.key();
-        let signer_seeds: &[&[&[u8]]] = &[&[b"vault", stake_key.as_ref(), &[ctx.bumps.vault]]];
-
-        let cpi_ctx = CpiContext::new_with_signer(
-            cpi_program,
-            Transfer {
-                from: ctx.accounts.vault.to_account_info(),
-                to: ctx.accounts.user_ata.to_account_info(),
-                authority: ctx.accounts.vault_authority.to_account_info(),
-            },
-            signer_seeds,
-        );
-
-        transfer(cpi_ctx, amount_to_unstake)?;
+            user_stake.pending_reward = pending_reward as u64;
+            user_stake.stake_debt = stake.reward_per_token_stored;
+            
+            
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let vault_key = ctx.accounts.vault.clone().key();
+            let signer_seeds: &[&[&[u8]]] = &[&[b"vault_authority", vault_key.as_ref(), &[ctx.bumps.vault_authority]]];
+            
+            let cpi_ctx = CpiContext::new_with_signer(
+                cpi_program,
+                Transfer {
+                    from: ctx.accounts.vault.to_account_info(),
+                    to: ctx.accounts.user_ata.to_account_info(),
+                    authority: ctx.accounts.vault_authority.to_account_info(),
+                },
+                signer_seeds,
+            );
+            
+            transfer(cpi_ctx, user_stake.amount_staked)?;
+            user_stake.amount_staked = 0;
         Ok(())
     }
 

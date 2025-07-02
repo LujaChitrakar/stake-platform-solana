@@ -47,7 +47,8 @@ describe("stake", () => {
   let reward_rate = new anchor.BN(4);
   // let user = Keypair.generate();
 
-  let secret_key = "YOUR SECERT KEY";
+  let secret_key =
+    "5Ytnn95cxkbf52DtJFfwyhm22YP4qW5T4SrrqJKymVwa2YKyecpbX6gQyat9pj7yyLkiMrrxo16EAokiaXehpEsS";
 
   let secret_key_bytes = bs58.decode(secret_key);
 
@@ -200,5 +201,27 @@ describe("stake", () => {
     user_stake = await program.account.userStake.fetch(userStakePda);
 
     console.log("user staked", user_stake);
+  });
+
+  it("Should be able to unstake token", async () => {
+    await program.methods
+      .unstakeToken()
+      .accounts({
+        user: user.publicKey,
+        stake: stakePda,
+        user_stake: userStakePda,
+        vault: vaultPda,
+        vault_authority: vaultAuthorityPda,
+        user_ata: userAta.address,
+        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+
+    user_stake = await program.account.userStake.fetch(userStakePda);
+    console.log("User Unstaked", user_stake);
   });
 });
