@@ -47,8 +47,7 @@ describe("stake", () => {
   let reward_rate = new anchor.BN(4);
   // let user = Keypair.generate();
 
-  let secret_key =
-    "5Ytnn95cxkbf52DtJFfwyhm22YP4qW5T4SrrqJKymVwa2YKyecpbX6gQyat9pj7yyLkiMrrxo16EAokiaXehpEsS";
+  let secret_key = "YOUR SECRET KEY";
 
   let secret_key_bytes = bs58.decode(secret_key);
 
