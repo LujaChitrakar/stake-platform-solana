@@ -47,50 +47,50 @@ describe("stake", () => {
   let reward_rate = new anchor.BN(100);
   // let user = Keypair.generate();
 
-  let secret_key = "YOUR WALLET SECRET KEY";
+  let secret_key = "YOUR SECRET KEY";
 
   let secret_key_bytes = bs58.decode(secret_key);
 
   let user = anchor.web3.Keypair.fromSecretKey(secret_key_bytes);
 
-  // it("Create SPL token!", async () => {
-  //   const tx = await program.methods
-  //     .createTokenMint(9, metadata.name, metadata.symbol, metadata.uri)
-  //     .accounts({
-  //       payer: payer.publicKey,
-  //       mintAccount: mintKeypair.publicKey,
-  //     })
-  //     .signers([mintKeypair])
-  //     .rpc();
+  it("Create SPL token!", async () => {
+    const tx = await program.methods
+      .createTokenMint(9, metadata.name, metadata.symbol, metadata.uri)
+      .accounts({
+        payer: payer.publicKey,
+        mintAccount: mintKeypair.publicKey,
+      })
+      .signers([mintKeypair])
+      .rpc();
 
-  //   console.log("Success!");
-  //   console.log(`Mint address: ${mintKeypair.publicKey} `);
-  //   console.log(`Transaction signature ${tx}`);
-  // });
+    console.log("Success!");
+    console.log(`Mint address: ${mintKeypair.publicKey} `);
+    console.log(`Transaction signature ${tx}`);
+  });
 
-  // it("Mint SPL token to payers wallet", async () => {
-  //   const associatedTokenAccountAddress = getAssociatedTokenAddressSync(
-  //     mintKeypair.publicKey,
-  //     payer.publicKey
-  //   );
-  //   const amount = new anchor.BN(100);
+  it("Mint SPL token to payers wallet", async () => {
+    const associatedTokenAccountAddress = getAssociatedTokenAddressSync(
+      mintKeypair.publicKey,
+      payer.publicKey
+    );
+    const amount = new anchor.BN(100);
 
-  //   const tx = await program.methods
-  //     .mintToken(amount)
-  //     .accounts({
-  //       mintAuthority: payer.publicKey,
-  //       recipient: payer.publicKey,
-  //       mintAccount: mintKeypair.publicKey,
-  //       associatedTokenAccount: associatedTokenAccountAddress,
-  //     })
-  //     .rpc();
-  //   console.log("SUCCESS!");
-  //   console.log(
-  //     `Associated TOken Account Address: ${associatedTokenAccountAddress}`
-  //   );
-  //   console.log(`Transaction Signature ${tx}`);
-  //   console.log(payer.publicKey);
-  // });
+    const tx = await program.methods
+      .mintToken(amount)
+      .accounts({
+        mintAuthority: payer.publicKey,
+        recipient: payer.publicKey,
+        mintAccount: mintKeypair.publicKey,
+        associatedTokenAccount: associatedTokenAccountAddress,
+      })
+      .rpc();
+    console.log("SUCCESS!");
+    console.log(
+      `Associated TOken Account Address: ${associatedTokenAccountAddress}`
+    );
+    console.log(`Transaction Signature ${tx}`);
+    console.log(payer.publicKey);
+  });
 
   it("Should be able to create a stake", async () => {
     [stakePda, stakeBump] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -162,14 +162,14 @@ describe("stake", () => {
     );
 
     // mint to user (ALready done)
-    // await mintTo(
-    //   provider.connection,
-    //   payer.payer,
-    //   staking_mint,
-    //   userAta.address,
-    //   payer.publicKey,
-    //   1000_000_000_000
-    // );
+    await mintTo(
+      provider.connection,
+      payer.payer,
+      staking_mint,
+      userAta.address,
+      payer.publicKey,
+      1000_000_000
+    );
 
     const userTokenAccountInfo = await getAccount(
       provider.connection,

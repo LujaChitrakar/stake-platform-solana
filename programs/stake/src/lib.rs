@@ -196,10 +196,6 @@ pub mod stake {
             user_stake.end_time <= Clock::get()?.unix_timestamp,
             ErrorCode::StakeTimeNotCompleted
         );
-        // require!(
-        //     user_stake.amount_staked >= amount_to_unstake,
-        //     ErrorCode::AmountGreaterThanStakedAmount
-        // );
 
         let curent_time = Clock::get()?.unix_timestamp;
         let time_elapsed = curent_time - stake.last_update_time;
