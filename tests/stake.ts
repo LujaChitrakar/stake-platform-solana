@@ -162,14 +162,15 @@ describe("stake", () => {
     );
 
     // mint to user (ALready done)
-    await mintTo(
-      provider.connection,
-      payer.payer,
-      staking_mint,
-      userAta.address,
-      payer.publicKey,
-      1000_000_000_000
-    );
+    // await mintTo(
+    //   provider.connection,
+    //   payer.payer,
+    //   staking_mint,
+    //   userAta.address,
+    //   payer.publicKey,
+    //   1000_000_000_000
+    // );
+
     const userTokenAccountInfo = await getAccount(
       provider.connection,
       userAta.address
@@ -222,5 +223,27 @@ describe("stake", () => {
 
     user_stake = await program.account.userStake.fetch(userStakePda);
     console.log("User Unstaked", user_stake);
+  });
+
+  it("Should be able to claim reward", async () => {
+    await program.methods
+      .claimReward()
+      .accounts({
+        user: user.publicKey,
+        stake: stakePda,
+        user_stake: userStakePda,
+        vault: vaultPda,
+        vault_authority: vaultAuthorityPda,
+        user_ata: userAta.address,
+        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+
+    user_stake = await program.account.userStake.fetch(userStakePda);
+    console.log("Reward claimed", user_stake);
   });
 });

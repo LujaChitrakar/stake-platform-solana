@@ -272,11 +272,9 @@ pub mod stake {
             * (stake.reward_per_token_stored - user_stake.stake_debt as u128)
             / REWARD_PRECISION;
 
-        
-
         let cpi_program=ctx.accounts.token_program.to_account_info();
-        let stake_key=stake.key();
-        let signer_seeds: &[&[&[u8]]]=&[&[b"vault",stake_key.as_ref(),&[ctx.bumps.vault]]];
+        let vault_key=ctx.accounts.vault.key();
+        let signer_seeds: &[&[&[u8]]]=&[&[b"vault_authority",vault_key.as_ref(),&[ctx.bumps.vault_authority]]];
 
         let cpi_ctx=CpiContext::new_with_signer(cpi_program, Transfer{
             from:ctx.accounts.vault.to_account_info(),
