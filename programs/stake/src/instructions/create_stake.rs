@@ -10,7 +10,7 @@ pub struct CreateStake<'info> {
     #[account(
         init,
         payer=admin,
-        space=AdminStake::INIT_SPACE,
+        space=8+AdminStake::INIT_SPACE,
         seeds=[b"stake",admin.key().as_ref()],
         bump
     )]

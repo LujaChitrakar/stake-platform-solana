@@ -21,7 +21,7 @@ pub struct StakeToken<'info> {
         init_if_needed,
         payer=user,
         seeds=[b"user_stake",user.key().as_ref(),stake.key().as_ref()],
-        space=UserStake::INIT_SPACE,
+        space=8+UserStake::INIT_SPACE,
         bump
     )]
     pub user_stake: Account<'info, UserStake>,

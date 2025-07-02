@@ -90,7 +90,6 @@ pub mod stake {
 
     pub fn create_stake(
         ctx: Context<CreateStake>,
-        reward_mint: Pubkey,
         reward_rate: u64,
     ) -> Result<()> {
         let stake_token_mint: Pubkey = "57dQxpHFknJs96w1Z1DTHi6QgxmR9i7XdhxKuZp8xtzQ"
@@ -103,13 +102,18 @@ pub mod stake {
 
         let stake = &mut ctx.accounts.stake;
 
+        msg!("Creating stake account for admin: {}", ctx.accounts.admin.key());
+
         stake.admin = ctx.accounts.admin.key();
         stake.staking_mint = ctx.accounts.staking_mint.key();
-        stake.reward_mint = reward_mint;
+        stake.reward_mint = stake_token_mint;
         stake.reward_rate = reward_rate;
         stake.last_update_time = Clock::get()?.unix_timestamp;
         stake.reward_per_token_stored = 0;
         stake.vault_bump = ctx.bumps.vault;
+
+        msg!("Stake account initialized: ");
+
         Ok(())
     }
 
