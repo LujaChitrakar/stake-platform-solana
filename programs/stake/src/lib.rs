@@ -132,13 +132,14 @@ pub mod stake {
         // );
 
         let user_stake = &mut ctx.accounts.user_stake;
+        let stake = &mut ctx.accounts.stake;
 
         let curent_time = Clock::get()?.unix_timestamp;
-        let last_update_time = ctx.accounts.stake.last_update_time;
+        let last_update_time = stake.last_update_time;
         let time_elapsed = curent_time - last_update_time;
-        let total_staked = ctx.accounts.stake.total_staked;
-        let reward_rate = ctx.accounts.stake.reward_rate;
-        let mut reward_per_token_stored = ctx.accounts.stake.reward_per_token_stored;
+        let total_staked = stake.total_staked;
+        let reward_rate = stake.reward_rate;
+        let mut reward_per_token_stored = stake.reward_per_token_stored;
 
         if total_staked > 0 {
             let additional_reward = (time_elapsed as u128)
@@ -151,7 +152,11 @@ pub mod stake {
                 .checked_add(additional_reward)
                 .unwrap();
         }
-        ctx.accounts.stake.last_update_time = curent_time;
+
+        stake.reward_per_token_stored=reward_per_token_stored;
+        stake.last_update_time = curent_time;
+        stake.total_staked=stake.total_staked.saturating_add(amount_to_stake);
+        
 
         user_stake.user = ctx.accounts.user.key();
         user_stake.stake = ctx.accounts.stake.key();

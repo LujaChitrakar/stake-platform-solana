@@ -44,7 +44,7 @@ describe("stake", () => {
 
   let mintKeypair = new Keypair();
   let admin = provider.wallet.publicKey;
-  let reward_rate = new anchor.BN(4);
+  let reward_rate = new anchor.BN(100);
   // let user = Keypair.generate();
 
   let secret_key = "YOUR SECRET KEY";
@@ -197,6 +197,7 @@ describe("stake", () => {
       })
       .signers([user])
       .rpc();
+    await new Promise((resolve) => setTimeout(resolve, 10000));
 
     user_stake = await program.account.userStake.fetch(userStakePda);
 
@@ -221,6 +222,13 @@ describe("stake", () => {
       .signers([user])
       .rpc();
 
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+    user_stake = await program.account.userStake.fetch(userStakePda);
+    console.log("User Unstaked", user_stake);
+  });
+
+  it("Should generate reward after some time", async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10000));
     user_stake = await program.account.userStake.fetch(userStakePda);
     console.log("User Unstaked", user_stake);
   });
