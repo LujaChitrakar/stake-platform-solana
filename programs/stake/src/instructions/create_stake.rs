@@ -33,8 +33,6 @@ pub struct CreateStake<'info> {
     pub staking_mint: Account<'info, Mint>,
 
     pub token_program: Program<'info, Token>,
-
     pub rent: Sysvar<'info, Rent>,
-
     pub system_program: Program<'info, System>,
 }

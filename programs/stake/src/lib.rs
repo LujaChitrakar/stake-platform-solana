@@ -226,7 +226,6 @@ pub mod stake {
             user_stake.pending_reward = pending_reward as u64;
             user_stake.stake_debt = stake.reward_per_token_stored;
             
-            
             let cpi_program = ctx.accounts.token_program.to_account_info();
             let vault_key = ctx.accounts.vault.clone().key();
             let signer_seeds: &[&[&[u8]]] = &[&[b"vault_authority", vault_key.as_ref(), &[ctx.bumps.vault_authority]]];

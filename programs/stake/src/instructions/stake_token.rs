@@ -34,7 +34,8 @@ pub struct StakeToken<'info> {
     pub vault: Account<'info, TokenAccount>,
 
     #[account(
-        mut,associated_token::mint=stake.staking_mint,associated_token::authority=user
+        mut,
+        associated_token::mint=stake.staking_mint,associated_token::authority=user
     )]
     pub user_ata: Account<'info, TokenAccount>,
 
