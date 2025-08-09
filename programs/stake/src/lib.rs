@@ -244,7 +244,6 @@ pub mod stake {
             user_stake.amount_staked = 0;
         Ok(())
     }
-
     pub fn claim_reward(ctx:Context<ClaimReward>)->Result<()>{
         let user_stake=&mut ctx.accounts.user_stake;
         let stake=&mut ctx.accounts.stake;
